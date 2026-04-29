@@ -1,0 +1,259 @@
+# FraudGuard Summary
+
+## Current Direction
+
+- Project will be built in IntelliJ as a Spring Boot Java project.
+- Java and Spring Boot implementation are the priority for grading.
+- ML is supportive only, not the main evaluated component.
+- `FraudGuard_ML_PaySim.ipynb` is the preferred ML artifact over the extra `ml/` script I added.
+
+## What Has Been Done
+
+- Reviewed the repository contents.
+- Confirmed the repo currently contains:
+  - `FraudGuard_ML_PaySim.ipynb`
+  - `FraudGuard_ML_Model.ipynb`
+  - `FraudGuard_ML_Model_Colab.ipynb`
+  - saved PaySim model artifacts
+  - `FruadGuard.pdf`
+- Identified that there is no Java source project yet in the repository.
+- Identified that `FraudGuard_ML_PaySim.ipynb` is the strongest existing ML file.
+- Identified that `FraudGuard_ML_Model.ipynb` is weaker because it appears synthetic and rule-derived.
+- Identified that `FraudGuard_ML_Model_Colab.ipynb` appears malformed at the end.
+- Added a running `summary.md` file to preserve context between chats.
+- Flattened the Spring Boot Maven project into the root `FraudGuard` folder.
+- Confirmed the Spring Boot starter currently uses:
+  - `pom.xml`
+  - `src/main/resources/application.properties`
+- Renamed the Spring Boot starter identity from `demo` to `fraudguard`.
+- Replaced starter package `com.example.demo` with `com.fraudguard`.
+- Replaced `DemoApplication.java` with `FraudGuardApplication.java`.
+- Removed the starter `HelloController.java`.
+- Replaced the starter test package with `src/test/java/com/fraudguard/FraudGuardApplicationTests.java`.
+- Created the base package layout:
+  - `config`
+  - `controller`
+  - `dto`
+  - `exception`
+  - `model`
+  - `repository`
+  - `service`
+- Updated `src/main/resources/application.properties` so the application name is `fraudguard`.
+- Implemented the first core domain layer:
+  - exceptions:
+    - `AccountNotFoundException`
+    - `InvalidTransactionException`
+  - account model:
+    - `Account`
+    - `BankAccount`
+    - `SavingsAccount`
+    - `CurrentAccount`
+    - `AccountType`
+  - transaction model:
+    - `Transaction`
+    - `Deposit`
+    - `Withdrawal`
+    - `Transfer`
+    - `TransactionType`
+  - profiling model:
+    - `TransactionProfile`
+- Verified the new domain classes compile with `javac`.
+- Implemented the fraud detection and scoring layer:
+  - rule engine:
+    - `FraudRule`
+    - `FraudRuleContext`
+    - `FraudRuleResult`
+  - rules:
+    - `LargeAmountRule`
+    - `RapidFireRule`
+    - `OddHoursRule`
+    - `VelocityRule`
+  - risk scoring:
+    - `RiskLevel`
+    - `RiskAssessment`
+    - `RiskScoringEngine`
+  - detection orchestration:
+    - `FraudDetectionEngine`
+- Verified the domain plus rule/service classes compile with `javac`.
+- Maven wrapper test execution is still pending because `mvnw.cmd` is failing in this shell environment before Maven starts.
+- Reviewed `Evaluation_Plan_PLWJ_Theory.pdf` and extracted the Phase 2 focus areas:
+  - `File Handling / JDBC`
+  - `Code Quality`
+  - `Testing`
+- Confirmed the report rubric expects:
+  - report structure
+  - technical explanation
+  - screenshots and results
+  - conclusion and future scope
+  - low AI/plagiarism percentage
+- Implemented the first end-to-end Spring Boot flow for Phase 2:
+  - DTOs:
+    - `TransactionRequest`
+    - `FraudAnalysisResponse`
+    - `CsvAnalysisResponse`
+    - `ErrorResponse`
+  - controller:
+    - `FraudAnalysisController`
+  - in-memory account handling:
+    - `BankAccountRegistry`
+  - transaction profile handling:
+    - `TransactionProfileService`
+  - file handling:
+    - `CsvTransactionReader`
+  - orchestration:
+    - `FraudAnalysisService`
+  - error handling:
+    - `GlobalExceptionHandler`
+- Added API paths for:
+  - `/api/fraud/health`
+  - `/api/fraud/analyze`
+  - `/api/fraud/analyze-csv`
+- Corrected the profile evaluation flow so `RapidFireRule` and `VelocityRule` consider the current transaction during analysis.
+- Implemented the first JDBC persistence layer for Phase 2:
+  - dependencies:
+    - Spring JDBC
+    - H2 database
+  - database config in `application.properties`
+  - schema file:
+    - `schema.sql`
+  - repositories:
+    - `TransactionAuditRepository`
+    - `FraudAlertRepository`
+  - alert model:
+    - `FraudAlert`
+  - file-based alert output:
+    - `AlertLogger`
+- Wired persistence into `FraudAnalysisService` so:
+  - every analyzed transaction is stored in `transaction_audit`
+  - high-risk transactions are stored in `fraud_alert`
+  - high-risk transactions are appended to `target/fraud-alerts.log`
+- Added H2 console configuration for manual demo in IntelliJ:
+  - `/h2-console`
+- Implemented the first real testing layer for Phase 2:
+  - rule tests:
+    - `LargeAmountRuleTest`
+    - `RapidFireRuleTest`
+    - `OddHoursRuleTest`
+    - `VelocityRuleTest`
+  - scoring test:
+    - `RiskScoringEngineTest`
+  - service test:
+    - `FraudAnalysisServiceTest`
+  - controller test:
+    - `FraudAnalysisControllerTest`
+  - shared test helper:
+    - `FraudRuleTestSupport`
+- Added a sample CSV test/demo file:
+  - `src/test/resources/sample-transactions.csv`
+- Updated dependencies so testing now uses `spring-boot-starter-test`.
+- Maven wrapper execution is still not verified in this shell environment, so the test files were added structurally but still need to be run from IntelliJ.
+- Manually verified the running Spring Boot app from PowerShell:
+  - `GET /api/fraud/health` returned `FraudGuard API is running`
+  - `POST /api/fraud/analyze` for:
+    - `TXN-5001` withdrawal of `30000` at `02:10`
+    - result: `riskScore=50`, `riskLevel=MEDIUM`, rules triggered:
+      - `LargeAmountRule`
+      - `OddHoursRule`
+  - `POST /api/fraud/analyze` for:
+    - `TXN-5002` deposit of `5000` at `10:00`
+    - result: `riskScore=0`, `riskLevel=LOW`
+  - `POST /api/fraud/analyze-csv` using `sample-transactions.csv`
+    - result: `totalTransactions=4`
+    - `flaggedTransactions=3`
+    - CSV analysis is working end-to-end
+- Current runtime status:
+  - main fraud APIs are working correctly
+  - CSV upload flow is working correctly
+  - persistence/logging should now be checked from DB/file outputs
+  - `/h2-console` is currently not opening and needs debugging
+- Added usability/debugging improvements after manual runtime testing:
+  - added `spring-boot-h2console` dependency for H2 console support with Spring Boot 4
+  - added root route `/` through `HomeController`
+  - added inspection APIs:
+    - `/api/fraud/audits`
+    - `/api/fraud/alerts`
+  - corrected missing-route handling so unknown paths now return `404` instead of misleading `500`
+- Added DTOs for persisted record inspection:
+  - `TransactionAuditRecordResponse`
+  - `AlertRecordResponse`
+- Verified additional runtime/demo behavior:
+  - `/h2-console` is now opening successfully
+  - H2 can be used to inspect JDBC tables during the demo
+- Current evaluation understanding:
+  - backend implementation is now strong enough to demonstrate:
+    - Spring Boot app execution
+    - fraud rule engine
+    - CSV file handling
+    - JDBC persistence
+    - alert logging
+  - however, evaluator-facing demo polish is still incomplete without a single-page UI or a planned API-demo flow
+- Important implementation clarification:
+  - the current running Spring Boot app is rule-based, not true ML-driven anomaly detection
+  - the Java app currently uses the 4 fraud rules and risk scoring engine
+  - the separately trained PaySim ML model is not yet integrated into the Java backend
+  - presentation/report wording should therefore be:
+    - current implementation: rule-based fraud detection system
+    - supporting ML work: trained anomaly/fraud model prepared separately
+    - future scope or next integration step: hybrid rule engine + ML model prediction
+- Current PPT alignment understanding:
+  - based on the earlier PPT summary, the PPT appears to describe:
+    - account and transaction classes
+    - rule-based fraud detection
+    - risk scoring
+    - transaction profiling
+    - ML and JDBC as future enhancements
+  - if that summary is accurate, then the current Spring Boot backend is consistent with the PPT design on the fraud-detection side
+
+## User Instructions To Follow
+
+- Ask before making changes.
+- Maintain this summary file after each chat so context is saved.
+- Build the main project using IntelliJ and Spring Boot.
+
+## Current Status
+
+- User plans to remove the extra `ml/` folder.
+- Spring Boot base project is now at the repository root.
+- The old nested `demo` folder has been successfully removed.
+- Addressed project loose ends and "senior-level" polish:
+  - **Transaction Blocking:** High-risk transactions now block the transaction from processing and do not affect the account balance.
+  - **Account Persistence:** Refactored `BankAccountRegistry` to use `JdbcTemplate` and H2 instead of an in-memory map. Added `bank_account` table and `data.sql` to populate initial accounts.
+  - **Transaction Profiling:** Refactored `TransactionProfileService` to keep a true running average by tracking total transaction count.
+  - **Frontend UI Dashboard:** Created a professional Bootstrap dashboard (`index.html`, `app.js`, `style.css`) that interacts with the backend for single transactions, CSV uploads, and real-time alert viewing. Added a "Available Test Accounts" helper section to prevent "Account Not Found" errors during demos. Removed `HomeController.java` to allow the dashboard to serve as the default application homepage.
+  - **Multithreading & Async Reporting:** Implemented a `ReportingService` using Spring's `@Async` to demonstrate multithreading. Every transaction now triggers a background task that generates a summary report in `logs/fraud-summary-report.txt`.
+  - **JDBC Transaction Management:** Added Spring's `@Transactional` to the service layer for financial data integrity.
+  - **Enterprise Identity Management:** Implemented a Login/Signup system with Session-based authentication. Supports distinct **Admin** and **Customer** roles with personalized dashboards.
+  - **Visual Analytics & Observability:** Integrated **Chart.js** to provide real-time visual insights. Includes a Fraud Score Trend line graph and a Risk Level Distribution doughnut chart.
+  - **Context-Aware Fraud Rules:** Added `SuspiciousActivityRule` to detect massive deposits relative to account balance and tiered `LargeAmountRule` for extreme transaction values.
+  - **Professional UI/UX:** Refined the interface using a Navy/Teal palette, toast notifications, search filters, and automatic data synchronization.
+- **Fixed Technical Issues:**
+  - Resolved chart synchronization bugs using a "Data-First" state management approach.
+  - Expanded database to 150 realistic accounts to demonstrate batch processing effectively.
+- **Major Architecture & UI Overhaul (Latest Progress):**
+  - **Bespoke Executive Terminal UI:** Completely redesigned the frontend away from a standard dashboard into a specialized "Financial Command Center" featuring a dark Indigo/Charcoal theme (`style-nexus.css`), a Live Ticker Bar, a Split-Pane layout with a real-time Activity Stream, and an Explainable AI (XAI) Intelligence Report overlay.
+  - **Dynamic Theme Switcher:** Implemented a dynamic theme switcher allowing toggling between "Executive Gold", "Cyber Neon", and "Classic Banking".
+  - **Live Traffic Simulator:** Refined the JavaScript live feed to accurately generate `DEPOSIT`, `WITHDRAWAL`, and `TRANSFER` vectors, fully synced with the 5-column table rendering.
+  - **Backend Concurrency & Integrity Fixes:** Added `synchronized` blocks to `TransactionProfileService` to prevent `ConcurrentModificationException` during high-volume simulation, and added `@Transactional` to `BankAccountRegistry.updateBalance` to prevent lost updates.
+  - **Pre-Validation Logic:** Fixed a critical bug in `FraudAnalysisService` where the engine ran heuristics before checking if the account had sufficient funds. Added an explicit `Insufficient Balance` exception block that propagates back to the UI as a `window.alert`.
+  - **Rule Expansion:** Updated `SuspiciousActivityRule` to monitor incoming `TRANSFER`s in addition to `DEPOSIT`s to properly align manual testing with live simulated traffic.
+  - **Team Isolation Refactor:** Re-architected the entire Java codebase into 4 isolated ownership packages (`deep`, `hardik`, `swaraj`, `tejas`) allowing team members to push code without merge conflicts, perfectly fulfilling the project plan.
+- **Enterprise-Grade Reliability & Performance Refactor (Latest Improvements):**
+  - **Concurrency & Thread Safety:** Eliminated race conditions in `TransactionProfileService` by implementing deep-copy mechanisms for evaluation profiles and improved synchronization on profile objects.
+  - **Memory Safety & Scalability:** Integrated **Caffeine Cache** for transaction profiles with an eviction policy (LRU) to prevent `OutOfMemoryError` in high-volume environments.
+  - **Optimistic Locking:** Implemented a `version` column for the `bank_account` table and updated `BankAccountRegistry` to detect and prevent "Lost Updates" during concurrent balance modifications.
+  - **Consistency & Integrity:** Resolved the "Dual-Write" problem in `FraudAnalysisService` using `TransactionSynchronizationManager`, ensuring in-memory fraud profiles are updated only after a successful database commit.
+  - **Streaming CSV Processing:** Refactored `CsvTransactionReader` and `analyzeCsv` to a streaming model with per-row transaction boundaries, allowing the system to process massive datasets without excessive memory consumption.
+  - **Async Robustness:** Added global error handling and SLF4J logging to the `ReportingService` to ensure background report generation is resilient to failures.
+  - **Configuration Management:** Externalized all business rule thresholds, risk points, and system log paths to `application.properties` for environment-agnostic deployment.
+  - **Dependency Stability:** Standardized the build environment on Spring Boot 3.4.1 and resolved several `pom.xml` dependency conflicts and invalid entries.
+- **JavaFX Desktop Integration (Requirement Fulfilled):**
+  - **Hybrid Architecture:** Pivoted the application from a pure web service to a **Spring Boot + JavaFX Desktop Application**. The system now launches a native OS window while maintaining the full Spring service layer and JDBC persistence.
+  - **Native FXML UI:** Designed a high-fidelity dashboard in `src/main/resources/fxml/main.fxml` featuring a native **Sidebar Navigation**, a **Real-Time LineChart** for risk trends, and a **Searchable TableView** for transaction audits.
+  - **Premium Desktop Aesthetic:** Implemented a custom "Slate & Azure" dark theme in `css/dark-theme.css` to provide an executive-level desktop experience.
+  - **Spring-JavaFX Glue:** Established a custom `ApplicationContext` bootstrapper in `FraudGuardApplication.java` that allows JavaFX controllers to use `@Autowired` for Spring service injection.
+  - **Native File Interactions:** Integrated **Native FileChoosers** for bulk CSV uploads, allowing the desktop app to interact directly with the local filesystem for dataset processing.
+  - **Real-Time Data Binding:** Bound the `TransactionAuditRepository` results directly to JavaFX `ObservableList` and `XYChart` series, enabling instant UI updates as JDBC transactions complete.
+- Next expected step is Final Submission:
+  - Generate the final project report highlighting the OOP Patterns (Strategy, Interfaces), the Spring Boot concurrent architecture, and the new Executive Terminal UI.
+  - Take high-resolution screenshots of the UI (specifically showing the XAI Modal, Insufficient Balance alert, and Live Stream catching fraud).
+  - Prepare for the final viva presentation based on the technical architecture.

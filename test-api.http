@@ -1,0 +1,29 @@
+GET http://localhost:8080/api/fraud/health
+
+  ###
+
+  POST http://localhost:8080/api/fraud/analyze
+  Content-Type: application/json
+
+  {
+    "transactionId": "TXN-5001",
+    "transactionType": "WITHDRAWAL",
+    "amount": 30000,
+    "transactionTime": "2026-04-16T02:10:00",
+    "sourceAccountId": "ACC1001",
+    "destinationAccountId": null
+  }
+
+  ###
+
+  POST http://localhost:8080/api/fraud/analyze
+  Content-Type: application/json
+
+  {
+    "transactionId": "TXN-5002",
+    "transactionType": "DEPOSIT",
+    "amount": 5000,
+    "transactionTime": "2026-04-16T10:00:00",
+    "sourceAccountId": null,
+    "destinationAccountId": "ACC1002"
+  }
