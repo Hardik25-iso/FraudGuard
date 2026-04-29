@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Initialize System — FraudGuard Enterprise</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:wght@700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="/style-nexus.css?v=6.1" rel="stylesheet">
+</head>
+<script>
+  const savedTheme = localStorage.getItem('fg-theme') || 'executive';
+  if (savedTheme !== 'executive') document.documentElement.setAttribute('data-theme', savedTheme);
+</script>
+<body class="auth-body">
+
+<nav class="auth-nav" style="width: 100%; border-bottom: none; background: transparent;">
+  <div class="brand">
+    <i class="fas fa-shield-halved"></i>
+    <span>FRAUDGUARD</span>
+  </div>
+  <a href="/landing.html" class="back-link" style="color: var(--text-muted); text-decoration: none;">← Back to Home</a>
+</nav>
+
+<div class="form-card fade-in">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h2 style="font-family: 'Source Serif 4', serif; font-size: 28px; margin-bottom: 8px;">Initialize System</h2>
+        <p style="color: var(--text-muted); font-size: 14px;">Register credentials for the FraudGuard Workstation.</p>
+    </div>
+
+    <div id="status-msg" class="d-none" style="padding: 12px; border-radius: 6px; font-size: 13px; font-weight: 700; margin-bottom: 20px; text-align: center;"></div>
+
+    <form id="signup-form">
+        <div class="fg">
+            <label class="form-label">FULL NAME</label>
+            <input type="text" id="fullName" class="input-field" placeholder="Enter your full name" required>
+        </div>
+        
+        <div class="fg-row">
+            <div class="fg">
+                <label class="form-label">OPERATOR USERNAME</label>
+                <input type="text" id="username" class="input-field" placeholder="Choose a username" required>
+            </div>
+            <div class="fg">
+                <label class="form-label">ACCESS KEY</label>
+                <input type="password" id="password" class="input-field" placeholder="••••••••" required>
+            </div>
+        </div>
+
+        <div class="fg" style="margin-bottom: 24px;">
+            <label class="form-label">BANK ACCOUNT ID (FOR SANDBOX)</label>
+            <input type="text" id="accountId" class="input-field mono" placeholder="e.g. ACC1001 (Optional)">
+            <p style="font-size:11px; color:var(--text-muted); margin-top:8px;">
+                <i class="fas fa-info-circle me-1" style="color: var(--brand);"></i> Linking an account allows you to simulate transactions from a specific node.
+            </p>
+        </div>
+
+        <button type="submit" class="action-btn" id="submit-btn">INITIALIZE OPERATOR</button>
+        <div class="back-link" style="margin-top: 24px;">Already an operator? <a href="/login.html">Sign in here</a></div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('signup-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('submit-btn');
+        const msgEl = document.getElementById('status-msg');
+        
+        btn.disabled = true;
+        btn.textContent = 'INITIALIZING...';
+        msgEl.classList.add('d-none');
+
+        const data = {
+            fullName: document.getElementById('fullName').value,
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value,
+            accountId: document.getElementById('accountId').value || null
+        };
+
+        try {
+            const response = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                msgEl.style.background = 'rgba(16, 185, 129, 0.1)';
+                msgEl.style.color = 'var(--success)';
+                msgEl.style.border = '1px solid rgba(16, 185, 129, 0.2)';
+                msgEl.textContent = 'Operator Initialized! Redirecting to login...';
+                msgEl.classList.remove('d-none');
+                setTimeout(() => window.location.href = '/login.html', 1500);
+            } else {
+                const result = await response.json();
+                msgEl.style.background = 'rgba(239, 68, 68, 0.1)';
+                msgEl.style.color = 'var(--danger)';
+                msgEl.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+                msgEl.textContent = result.message || 'Initialization failed.';
+                msgEl.classList.remove('d-none');
+                btn.disabled = false;
+                btn.textContent = 'INITIALIZE OPERATOR';
+            }
+        } catch (err) {
+            msgEl.style.background = 'rgba(239, 68, 68, 0.1)';
+            msgEl.style.color = 'var(--danger)';
+            msgEl.style.border = '1px solid rgba(239, 68, 68, 0.2)';
+            msgEl.textContent = 'Nexus connection failed.';
+            msgEl.classList.remove('d-none');
+            btn.disabled = false;
+            btn.textContent = 'INITIALIZE OPERATOR';
+        }
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FraudGuard Nexus | Executive Terminal</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:wght@700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/style-nexus.css?v=6.1" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="sb-header">
+        <div class="brand">
+            <i class="fas fa-shield-halved"></i>
+            <span>FRAUDGUARD</span>
+        </div>
+    </div>
+    
+    <div class="sb-section">Command Center</div>
+    <button class="sb-link active"><i class="fas fa-satellite-dish" style="width:20px;"></i> Real-Time Feed</button>
+    <button class="sb-link"><i class="fas fa-chart-pie" style="width:20px;"></i> Analytics</button>
+    
+    <div class="sb-section">Simulation</div>
+    <button class="sb-link d-none simulator-btn" onclick="toggleSimulator()">
+        <i class="fas fa-bolt" style="width:20px;"></i> <span class="simulator-text">Start Traffic Feed</span>
+    </button>
+    
+    <div class="sb-footer">
+        <div class="sb-user">
+            <div class="sb-avatar" id="user-avatar">OP</div>
+            <div>
+                <div class="sb-name" id="user-name">Operator</div>
+                <div class="sb-role" id="user-role">Analyst</div>
+            </div>
+        </div>
+        <button id="logout-btn" class="btn-logout">SECURE LOGOUT</button>
+    </div>
+</div>
+
+<!-- MAIN WORKSTATION -->
+<div class="main-wrapper">
+    <!-- TICKER -->
+    <div class="status-bar" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; gap: 40px; align-items: center;">
+            <div class="ticker-item"><i class="fas fa-circle" style="font-size: 8px; color: var(--success);"></i> <span style="color:var(--text);">SYSTEM:</span> <span class="ticker-val">OPERATIONAL</span></div>
+            <div class="ticker-item"><span style="color:var(--text);">ANALYZED:</span> <span class="ticker-val" id="stat-total">0</span></div>
+            <div class="ticker-item"><span style="color:var(--text);">FLAGGED:</span> <span class="ticker-val" id="stat-flagged">0</span></div>
+            <div class="ticker-item"><span style="color:var(--text);">PREVENTION:</span> <span class="ticker-val" id="stat-rate">0%</span></div>
+            <div class="ticker-item"><span style="color:var(--text);">VOLUME:</span> <span class="ticker-val" id="stat-volume">₹0</span></div>
+        </div>
+        <select id="theme-switch" style="background:transparent; color:var(--text-muted); border:1px solid var(--border); padding:4px 8px; border-radius:4px; font-size:11px; outline:none; cursor:pointer;">
+            <option value="luxury">Luxury Obsidian</option>
+            <option value="executive">Executive Gold</option>
+            <option value="cyber">Cyber Neon</option>
+            <option value="classic">Classic Banking</option>
+        </select>
+    </div>
+
+    <div class="content">
+        <!-- LEFT: STREAM & CHARTS -->
+        <div style="display: flex; flex-direction: column; gap: 32px;">
+            <div class="panel" style="margin-bottom:0;">
+                <div class="panel-header">
+                    <span class="panel-title">Threat Assessment Trend</span>
+                    <span class="risk-indicator risk-low">LIVE</span>
+                </div>
+                <div class="panel-body" style="height: 220px;">
+                    <canvas id="trendsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-bottom:0; flex:1; display:flex; flex-direction:column;">
+                <div class="panel-header">
+                    <span class="panel-title">Activity Stream</span>
+                    <div style="display: flex; gap: 12px;">
+                        <input type="text" id="table-search" placeholder="FILTER ID..." class="input-field mono" style="padding: 6px 12px; width: 150px; background: rgba(255,255,255,0.05);">
+                        <button id="refresh-data" style="background:none; border:none; color: var(--brand); cursor:pointer;"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                </div>
+                <div style="flex:1; overflow-y:auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Transaction ID</th>
+                                <th>Payload</th>
+                                <th>Status</th>
+                                <th>Heuristics</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audits-table-body">
+                            <!-- Dynamic Content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: CONTROLS -->
+        <div style="display: flex; flex-direction: column; gap: 32px;">
+            <div class="panel" style="margin-bottom:0;" id="analysis-section">
+                <div class="panel-header">
+                    <span class="panel-title" style="color: var(--brand);">Manual Inspection</span>
+                </div>
+                <div class="panel-body">
+                    <form id="single-txn-form">
+                        <div class="fg">
+                            <label class="form-label">Identifier</label>
+                            <input type="text" id="txn-id" class="input-field mono" placeholder="TXN-XXXX">
+                        </div>
+                        <div class="fg-row" style="margin-bottom:18px;">
+                            <div>
+                                <label class="form-label">Vector</label>
+                                <select id="txn-type" class="input-field">
+                                    <option value="TRANSFER">Transfer</option>
+                                    <option value="WITHDRAWAL">Withdrawal</option>
+                                    <option value="DEPOSIT">Deposit</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Amount (₹)</label>
+                                <input type="number" step="0.01" id="txn-amount" class="input-field mono" placeholder="0.00" required>
+                            </div>
+                        </div>
+                        <div class="fg-row" style="margin-bottom:24px;">
+                            <div>
+                                <label class="form-label">Source Node</label>
+                                <input type="text" id="txn-source" class="input-field mono" placeholder="ACC1XXX" required>
+                            </div>
+                            <div>
+                                <label class="form-label">Target Node</label>
+                                <input type="text" id="txn-dest" class="input-field mono" placeholder="ACC1XXX">
+                            </div>
+                        </div>
+                        <button type="submit" class="action-btn">EXECUTE SCAN</button>
+                    </form>
+                    <div id="single-result" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-bottom:0;" id="batch-section">
+                <div class="panel-header">
+                    <span class="panel-title">Batch Ingestion</span>
+                </div>
+                <div class="panel-body">
+                    <form id="csv-form">
+                        <input type="file" id="csv-file" accept=".csv" class="input-field" style="margin-bottom: 16px; padding: 8px;">
+                        <button type="submit" class="btn-outline w-100" style="text-transform: uppercase; letter-spacing:1px;">Upload Dataset</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="panel" style="margin-bottom:0;">
+                <div class="panel-header">
+                    <span class="panel-title">Risk Distribution</span>
+                </div>
+                <div class="panel-body" style="height: 180px; display:flex; justify-content:center;">
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Overlay for XAI -->
+<div id="xaiModal" class="intelligence-overlay">
+    <div class="overlay-content">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px;">
+            <div>
+                <h2 style="font-family: 'Source Serif 4', serif; font-size: 28px; color: var(--brand);">Intelligence Report</h2>
+                <div id="xai-txn-id" class="mono" style="color: var(--text-muted); font-size: 14px; margin-top: 4px;">TXN-ID</div>
+            </div>
+            <button onclick="closeXAIModal()" style="background:none; border:none; color: var(--text-muted); cursor:pointer; font-size: 24px;"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="xai-modal-body">
+            <!-- Dynamic Content -->
+        </div>
+    </div>
+</div>
+
+<!-- Notification Toast -->
+<div id="liveToast" style="position: fixed; bottom: 30px; right: 30px; background: var(--panel); border: 1px solid var(--brand); padding: 20px 24px; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.8); display: none; z-index: 2000; min-width: 320px; border-left: 4px solid var(--brand);">
+    <div style="display: flex; gap: 16px; align-items: center;">
+        <i class="fas fa-info-circle" style="color: var(--brand); font-size: 24px;"></i>
+        <div>
+            <div style="font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Nexus Update</div>
+            <div id="toast-msg" style="font-size: 14px; margin-top: 4px; font-weight: 600; color: white;"></div>
+        </div>
+    </div>
+</div>
+
+<script src="/app-nexus.js"></script>
+<script>
+    function closeXAIModal() {
+        document.getElementById('xaiModal').style.display = 'none';
+    }
+
+    const switcher = document.getElementById('theme-switch');
+    if (switcher) {
+        switcher.value = localStorage.getItem('fg-theme') || 'executive';
+        switcher.addEventListener('change', (e) => {
+            const theme = e.target.value;
+            if (theme === 'executive') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            localStorage.setItem('fg-theme', theme);
+            if (window.trendsChart && window.riskChart) {
+                const color = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim() || '#d4af37';
+                window.trendsChart.data.datasets[0].borderColor = color;
+                window.trendsChart.update();
+            }
+        });
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FraudGuard Enterprise — Security System</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Source+Serif+4:wght@700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<link href="/style-nexus.css?v=6.1" rel="stylesheet">
+</head>
+<body class="auth-body">
+
+<nav class="auth-nav">
+  <div class="brand">
+    <i class="fas fa-shield-halved"></i>
+    <span>FRAUDGUARD</span>
+  </div>
+  <div style="display:flex;gap:12px;">
+    <a href="/login.html" class="btn-outline" style="text-decoration: none;">OPERATOR LOGIN</a>
+    <a href="/signup.html" class="btn-primary" style="text-decoration: none;">INITIALIZE SYSTEM</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-tag">ENTERPRISE EDITION · V2.0</div>
+    <h1>Real-Time Financial <br><em style="color: var(--brand); font-style: normal;">Fraud Detection</em></h1>
+    <p>Deploy next-generation heuristics and behavioral profiling to secure your banking infrastructure. Powered by sub-millisecond rule engines and automated risk scoring.</p>
+    <div style="display:flex; gap:16px;">
+      <a href="/login.html" class="action-btn" style="width: auto; padding: 14px 32px; text-decoration: none;">LAUNCH NEXUS TERMINAL</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="mock-window">
+        <div style="display:flex; justify-content:space-between; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+            <span style="font-size: 11px; font-weight: 800; color: var(--text-muted); letter-spacing: 1px;">LIVE INTERCEPTIONS</span>
+            <span class="risk-indicator risk-high">CRITICAL</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding: 12px 0; border-bottom: 1px solid var(--border); align-items: center;">
+            <span class="mono" style="color:var(--brand);">TXN-88219</span>
+            <span style="font-weight: 700;">₹450,000</span>
+            <span class="risk-indicator risk-high">BLOCK</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding: 12px 0; align-items: center;">
+            <span class="mono" style="color:var(--brand);">TXN-12093</span>
+            <span style="font-weight: 700;">₹1,200</span>
+            <span class="risk-indicator risk-low">PASS</span>
+        </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const switcher = document.getElementById('theme-switch');
+  const savedTheme = localStorage.getItem('fg-theme') || 'executive';
+  if (savedTheme !== 'executive') document.documentElement.setAttribute('data-theme', savedTheme);
+  switcher.value = savedTheme;
+  
+  switcher.addEventListener('change', (e) => {
+      const theme = e.target.value;
+      if (theme === 'executive') {
+          document.documentElement.removeAttribute('data-theme');
+      } else {
+          document.documentElement.setAttribute('data-theme', theme);
+      }
+      localStorage.setItem('fg-theme', theme);
+  });
+</script>
+</body>
+</html>
