@@ -53,6 +53,26 @@ public class BankAccountRegistry {
         );
     }
     
+    public java.util.List<BankAccount> getAllAccounts() {
+        return jdbcTemplate.query(
+                "SELECT account_id, account_type, account_holder_name, balance, version FROM bank_account",
+                (rs, rowNum) -> {
+                    String id = rs.getString("account_id");
+                    String type = rs.getString("account_type");
+                    String name = rs.getString("account_holder_name");
+                    BigDecimal balance = rs.getBigDecimal("balance");
+                    int version = rs.getInt("version");
+                    
+                    if ("SAVINGS".equalsIgnoreCase(type)) {
+                        return new SavingsAccount(id, name, balance, version);
+                    } else {
+                        return new CurrentAccount(id, name, balance, version);
+                    }
+                }
+        );
+    }
+
+    
     @Transactional
     public void updateBalance(BankAccount account) {
         int rows = jdbcTemplate.update(

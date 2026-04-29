@@ -6,7 +6,9 @@ import com.fraudguard.deep.dto.TransactionAuditRecordResponse;
 import com.fraudguard.deep.dto.TransactionRequest;
 import com.fraudguard.deep.repository.FraudAlertRepository;
 import com.fraudguard.deep.repository.TransactionAuditRepository;
+import com.fraudguard.deep.service.account.BankAccountRegistry;
 import com.fraudguard.deep.service.analysis.FraudAnalysisService;
+import com.fraudguard.hardik.model.account.BankAccount;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -17,7 +19,9 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.chart.BarChart;
 import javafx.scene.chart.LineChart;
+import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
@@ -43,6 +47,7 @@ public class MainFxController {
     private final FraudAnalysisService fraudAnalysisService;
     private final TransactionAuditRepository transactionAuditRepository;
     private final FraudAlertRepository fraudAlertRepository;
+    private final BankAccountRegistry bankAccountRegistry;
 
     @FXML private Label statusLabel;
     @FXML private TableView<TransactionAuditRecordResponse> auditTable;
@@ -51,16 +56,21 @@ public class MainFxController {
     @FXML private TableColumn<TransactionAuditRecordResponse, String> colAmount;
     @FXML private TableColumn<TransactionAuditRecordResponse, Integer> colRisk;
     @FXML private TableColumn<TransactionAuditRecordResponse, Boolean> colFlagged;
+    
     @FXML private LineChart<String, Number> riskChart;
+    @FXML private PieChart riskPieChart;
+    @FXML private BarChart<String, Number> volumeBarChart;
 
     @FXML private VBox dashboardPane;
     @FXML private VBox analyzerPane;
     @FXML private VBox alertsPane;
+    @FXML private VBox accountsPane;
     @FXML private VBox settingsPane;
     
     @FXML private Button btnDashboard;
     @FXML private Button btnAnalyzer;
     @FXML private Button btnAlerts;
+    @FXML private Button btnAccounts;
     @FXML private Button btnSimulate;
     @FXML private Button btnSettings;
 
@@ -78,18 +88,27 @@ public class MainFxController {
     @FXML private TableColumn<AlertRecordResponse, String> colAlertLevel;
     @FXML private TableColumn<AlertRecordResponse, String> colAlertRules;
     @FXML private TableColumn<AlertRecordResponse, String> colAlertReasons;
+    
+    @FXML private TableView<BankAccount> accountsTable;
+    @FXML private TableColumn<BankAccount, String> colAccId;
+    @FXML private TableColumn<BankAccount, String> colAccName;
+    @FXML private TableColumn<BankAccount, String> colAccType;
+    @FXML private TableColumn<BankAccount, String> colAccBalance;
 
     private final ObservableList<TransactionAuditRecordResponse> auditData = FXCollections.observableArrayList();
     private final ObservableList<AlertRecordResponse> alertData = FXCollections.observableArrayList();
+    private final ObservableList<BankAccount> accountData = FXCollections.observableArrayList();
 
     private Timeline simulatorTimeline;
 
     public MainFxController(FraudAnalysisService fraudAnalysisService, 
                             TransactionAuditRepository transactionAuditRepository,
-                            FraudAlertRepository fraudAlertRepository) {
+                            FraudAlertRepository fraudAlertRepository,
+                            BankAccountRegistry bankAccountRegistry) {
         this.fraudAnalysisService = fraudAnalysisService;
         this.transactionAuditRepository = transactionAuditRepository;
         this.fraudAlertRepository = fraudAlertRepository;
+        this.bankAccountRegistry = bankAccountRegistry;
     }
 
     @FXML
@@ -110,6 +129,14 @@ public class MainFxController {
             alertsTable.setItems(alertData);
         }
 
+        if (colAccId != null) {
+            colAccId.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getAccountId()));
+            colAccName.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getAccountHolderName()));
+            colAccType.setCellValueFactory(cd -> new SimpleStringProperty(cd.getValue().getAccountType().name()));
+            colAccBalance.setCellValueFactory(cd -> new SimpleStringProperty(String.format("%,.2f", cd.getValue().getBalance())));
+            accountsTable.setItems(accountData);
+        }
+
         auditTable.setItems(auditData);
         refreshData();
         refreshAlerts();
@@ -122,12 +149,15 @@ public class MainFxController {
         btnAnalyzer.getStyleClass().add("nav-button");
         btnAlerts.getStyleClass().remove("nav-button-active");
         btnAlerts.getStyleClass().add("nav-button");
+        btnAccounts.getStyleClass().remove("nav-button-active");
+        btnAccounts.getStyleClass().add("nav-button");
         btnSettings.getStyleClass().remove("nav-button-active");
         btnSettings.getStyleClass().add("nav-button");
         
         dashboardPane.setVisible(false);
         analyzerPane.setVisible(false);
         alertsPane.setVisible(false);
+        accountsPane.setVisible(false);
         settingsPane.setVisible(false);
     }
 
@@ -159,6 +189,15 @@ public class MainFxController {
     }
 
     @FXML
+    public void showAccounts() {
+        resetNavButtons();
+        accountsPane.setVisible(true);
+        btnAccounts.getStyleClass().remove("nav-button");
+        btnAccounts.getStyleClass().add("nav-button-active");
+        refreshAccounts();
+    }
+
+    @FXML
     public void showSettings() {
         resetNavButtons();
         settingsPane.setVisible(true);
@@ -170,6 +209,12 @@ public class MainFxController {
     public void refreshAlerts() {
         List<AlertRecordResponse> alerts = fraudAlertRepository.findRecentAlerts();
         alertData.setAll(alerts);
+    }
+
+    @FXML
+    public void refreshAccounts() {
+        List<BankAccount> accounts = bankAccountRegistry.getAllAccounts();
+        accountData.setAll(accounts);
     }
 
     @FXML
@@ -194,15 +239,22 @@ public class MainFxController {
     }
 
     private void runSimulatedTransaction() {
+        List<BankAccount> accounts = bankAccountRegistry.getAllAccounts();
+        if (accounts.isEmpty()) return;
+
         boolean isFraud = Math.random() > 0.7;
-        String[] accIds = {"ACC1001", "ACC1006", "ACC1025", "ACC1042", "ACC1088"};
         String[] types = {"TRANSFER", "WITHDRAWAL", "DEPOSIT"};
         String type = types[(int)(Math.random() * types.length)];
         
-        String source = "DEPOSIT".equals(type) ? null : accIds[(int)(Math.random() * accIds.length)];
-        String dest = "WITHDRAWAL".equals(type) ? null : accIds[(int)(Math.random() * accIds.length)];
+        BankAccount srcAcc = accounts.get((int)(Math.random() * accounts.size()));
+        BankAccount destAcc = accounts.get((int)(Math.random() * accounts.size()));
         
-        BigDecimal amt = BigDecimal.valueOf(isFraud ? (Math.random() * 500000 + 50000) : (Math.random() * 5000 + 100));
+        String source = "DEPOSIT".equals(type) ? null : srcAcc.getAccountId();
+        String dest = "WITHDRAWAL".equals(type) ? null : destAcc.getAccountId();
+        
+        // Make standard transactions lower to not trigger LargeAmount rules,
+        // and make fraud transactions realistic based on the rule thresholds (e.g. > 500k for high risk)
+        BigDecimal amt = BigDecimal.valueOf(isFraud ? (Math.random() * 800000 + 600000) : (Math.random() * 5000 + 100));
         
         TransactionRequest request = new TransactionRequest(
                 "SIM-" + (int)(Math.random() * 100000),
@@ -217,8 +269,9 @@ public class MainFxController {
             fraudAnalysisService.analyzeTransaction(request);
             refreshData();
             refreshAlerts();
+            if (accountsPane.isVisible()) refreshAccounts();
         } catch (Exception e) {
-            // Ignore simulation errors
+            // Ignore simulation errors (e.g. Insufficient balance)
         }
     }
 
@@ -250,10 +303,12 @@ public class MainFxController {
             
             if (response.flagged()) {
                 analysisResultLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;"); // Red 500
+                refreshAlerts();
             } else {
-                analysisResultLabel.setStyle("-fx-text-fill: #10b981; -fx-font-weight: bold;"); // Green 500 (Luxury theme)
+                analysisResultLabel.setStyle("-fx-text-fill: #10b981; -fx-font-weight: bold;"); // Green 500
             }
-            
+            refreshData();
+            if (accountsPane.isVisible()) refreshAccounts();
         } catch (Exception e) {
             analysisResultLabel.setText("ERROR: " + e.getMessage());
             analysisResultLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;");
@@ -269,21 +324,46 @@ public class MainFxController {
     }
 
     private void updateChart(List<TransactionAuditRecordResponse> audits) {
-        riskChart.getData().clear();
-        XYChart.Series<String, Number> series = new XYChart.Series<>();
-        series.setName("Risk Scores");
+        if (riskChart != null) {
+            riskChart.getData().clear();
+            XYChart.Series<String, Number> series = new XYChart.Series<>();
+            series.setName("Risk Scores");
 
-        // Take last 10 for the chart
-        List<TransactionAuditRecordResponse> recent = audits.stream()
-                .limit(10)
-                .toList();
-        
-        for (int i = recent.size() - 1; i >= 0; i--) {
-            TransactionAuditRecordResponse record = recent.get(i);
-            series.getData().add(new XYChart.Data<>(record.transactionId(), record.riskScore()));
+            List<TransactionAuditRecordResponse> recent = audits.stream().limit(15).toList();
+            for (int i = recent.size() - 1; i >= 0; i--) {
+                TransactionAuditRecordResponse record = recent.get(i);
+                series.getData().add(new XYChart.Data<>(record.transactionId(), record.riskScore()));
+            }
+            riskChart.getData().add(series);
         }
 
-        riskChart.getData().add(series);
+        if (riskPieChart != null) {
+            long low = audits.stream().filter(a -> "LOW".equals(a.riskLevel())).count();
+            long medium = audits.stream().filter(a -> "MEDIUM".equals(a.riskLevel())).count();
+            long high = audits.stream().filter(a -> "HIGH".equals(a.riskLevel())).count();
+            
+            ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList(
+                new PieChart.Data("Low Risk", low),
+                new PieChart.Data("Medium Risk", medium),
+                new PieChart.Data("High Risk", high)
+            );
+            riskPieChart.setData(pieData);
+        }
+
+        if (volumeBarChart != null) {
+            volumeBarChart.getData().clear();
+            long dep = audits.stream().filter(a -> "DEPOSIT".equals(a.transactionType())).count();
+            long wit = audits.stream().filter(a -> "WITHDRAWAL".equals(a.transactionType())).count();
+            long trans = audits.stream().filter(a -> "TRANSFER".equals(a.transactionType())).count();
+
+            XYChart.Series<String, Number> volSeries = new XYChart.Series<>();
+            volSeries.setName("Volume");
+            volSeries.getData().add(new XYChart.Data<>("DEPOSIT", dep));
+            volSeries.getData().add(new XYChart.Data<>("WITHDRAWAL", wit));
+            volSeries.getData().add(new XYChart.Data<>("TRANSFER", trans));
+            
+            volumeBarChart.getData().add(volSeries);
+        }
     }
 
     @FXML

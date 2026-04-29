@@ -32,6 +32,7 @@
             <Button fx:id="btnAnalyzer" text="TRANSACTION ANALYZER" maxWidth="Infinity" styleClass="nav-button" onAction="#showAnalyzer"/>
             <Button text="BULK CSV UPLOAD" maxWidth="Infinity" styleClass="nav-button" onAction="#handleCsvUpload"/>
             <Button fx:id="btnAlerts" text="LIVE ALERTS" maxWidth="Infinity" styleClass="nav-button" onAction="#showAlerts"/>
+            <Button fx:id="btnAccounts" text="ACCOUNTS" maxWidth="Infinity" styleClass="nav-button" onAction="#showAccounts"/>
             <Region VBox.vgrow="ALWAYS" />
             <Button fx:id="btnSimulate" text="START SIMULATION" maxWidth="Infinity" styleClass="action-button" onAction="#toggleSimulation" style="-fx-margin-bottom: 10px;"/>
             <Button fx:id="btnSettings" text="SETTINGS" maxWidth="Infinity" styleClass="nav-button" onAction="#showSettings"/>
@@ -46,10 +47,21 @@
                 <HBox spacing="20">
                     <VBox styleClass="card" HBox.hgrow="ALWAYS">
                         <Text text="RISK SCORE TREND" styleClass="card-title"/>
-                        <LineChart fx:id="riskChart" prefHeight="300">
+                        <LineChart fx:id="riskChart" prefHeight="250">
                             <xAxis><CategoryAxis side="BOTTOM" label="Time"/></xAxis>
                             <yAxis><NumberAxis side="LEFT" label="Score"/></yAxis>
                         </LineChart>
+                    </VBox>
+                    <VBox styleClass="card" HBox.hgrow="ALWAYS">
+                        <Text text="RISK DISTRIBUTION" styleClass="card-title"/>
+                        <javafx.scene.chart.PieChart fx:id="riskPieChart" prefHeight="250"/>
+                    </VBox>
+                    <VBox styleClass="card" HBox.hgrow="ALWAYS">
+                        <Text text="TRANSACTION VOLUME" styleClass="card-title"/>
+                        <javafx.scene.chart.BarChart fx:id="volumeBarChart" prefHeight="250">
+                            <xAxis><CategoryAxis side="BOTTOM"/></xAxis>
+                            <yAxis><NumberAxis side="LEFT"/></yAxis>
+                        </javafx.scene.chart.BarChart>
                     </VBox>
                 </HBox>
 
@@ -66,6 +78,25 @@
                             <TableColumn fx:id="colAmount" text="AMOUNT" prefWidth="120"/>
                             <TableColumn fx:id="colRisk" text="RISK" prefWidth="80"/>
                             <TableColumn fx:id="colFlagged" text="FLAGGED" prefWidth="100"/>
+                        </columns>
+                    </TableView>
+                </VBox>
+            </VBox>
+
+            <VBox fx:id="accountsPane" spacing="20" visible="false">
+                <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+                <VBox styleClass="card" VBox.vgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT">
+                        <Text text="BANK ACCOUNTS DATABASE" styleClass="card-title"/>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button text="REFRESH ACCOUNTS" onAction="#refreshAccounts" styleClass="action-button"/>
+                    </HBox>
+                    <TableView fx:id="accountsTable" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="colAccId" text="ACCOUNT ID" prefWidth="150"/>
+                            <TableColumn fx:id="colAccName" text="ACCOUNT HOLDER" prefWidth="250"/>
+                            <TableColumn fx:id="colAccType" text="TYPE" prefWidth="150"/>
+                            <TableColumn fx:id="colAccBalance" text="BALANCE (INR)" prefWidth="200"/>
                         </columns>
                     </TableView>
                 </VBox>

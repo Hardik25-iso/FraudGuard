@@ -97,3 +97,35 @@
     -fx-text-fill: #e4e4e7;
 }
 
+/* CHARTS STYLING */
+.chart {
+    -fx-padding: 10px;
+    -fx-background-color: transparent;
+}
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
+.chart-vertical-grid-lines {
+    -fx-stroke: transparent;
+}
+.chart-horizontal-grid-lines {
+    -fx-stroke: #27272a;
+}
+.axis {
+    -fx-tick-label-fill: #a1a1aa;
+}
+.axis-tick-mark, .axis-minor-tick-mark {
+    -fx-stroke: transparent;
+}
+
+/* Pie Chart Colors */
+.default-color0.chart-pie { -fx-pie-color: #10b981; } /* Low */
+.default-color1.chart-pie { -fx-pie-color: #f59e0b; } /* Mid */
+.default-color2.chart-pie { -fx-pie-color: #ef4444; } /* High */
+.chart-pie-label { -fx-fill: #a1a1aa; -fx-font-size: 10px; }
+
+/* Bar Chart Colors */
+.default-color0.chart-bar { -fx-bar-fill: #3b82f6; } /* Deposit */
+.default-color1.chart-bar { -fx-bar-fill: #ec4899; } /* Withdrawal */
+.default-color2.chart-bar { -fx-bar-fill: #a855f7; } /* Transfer */
+
