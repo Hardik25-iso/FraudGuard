@@ -164,7 +164,7 @@
                 <VBox styleClass="card" VBox.vgrow="ALWAYS" spacing="15">
                     <Text text="SYSTEM SETTINGS" styleClass="card-title"/>
                     <Label text="Configuration is currently managed via application.properties." styleClass="table-cell"/>
-                    <Label text="- Database: H2 In-Memory" styleClass="table-cell"/>
+                    <Label text="- Database: MySQL Server (Local)" styleClass="table-cell"/>
                     <Label text="- Alert Logging: logs/fraud-alerts.log" styleClass="table-cell"/>
                     <Label text="- Report Logging: logs/fraud-summary-report.txt" styleClass="table-cell"/>
                     <Label text="- Fraud Thresholds: Configured in properties file." styleClass="table-cell"/>
