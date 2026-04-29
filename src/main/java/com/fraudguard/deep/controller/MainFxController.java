@@ -7,6 +7,9 @@ import com.fraudguard.deep.dto.TransactionRequest;
 import com.fraudguard.deep.repository.FraudAlertRepository;
 import com.fraudguard.deep.repository.TransactionAuditRepository;
 import com.fraudguard.deep.service.analysis.FraudAnalysisService;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -24,6 +27,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
+import javafx.util.Duration;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -57,6 +61,7 @@ public class MainFxController {
     @FXML private Button btnDashboard;
     @FXML private Button btnAnalyzer;
     @FXML private Button btnAlerts;
+    @FXML private Button btnSimulate;
     @FXML private Button btnSettings;
 
     @FXML private TextField txtTxnId;
@@ -76,6 +81,8 @@ public class MainFxController {
 
     private final ObservableList<TransactionAuditRecordResponse> auditData = FXCollections.observableArrayList();
     private final ObservableList<AlertRecordResponse> alertData = FXCollections.observableArrayList();
+
+    private Timeline simulatorTimeline;
 
     public MainFxController(FraudAnalysisService fraudAnalysisService, 
                             TransactionAuditRepository transactionAuditRepository,
@@ -166,12 +173,65 @@ public class MainFxController {
     }
 
     @FXML
+    public void toggleSimulation() {
+        if (simulatorTimeline != null) {
+            simulatorTimeline.stop();
+            simulatorTimeline = null;
+            btnSimulate.setText("START SIMULATION");
+            btnSimulate.setStyle("-fx-background-color: #a855f7; -fx-text-fill: white;");
+            statusLabel.setText("SIMULATION STOPPED");
+        } else {
+            btnSimulate.setText("STOPPING...");
+            btnSimulate.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white;");
+            statusLabel.setText("SIMULATION RUNNING");
+            
+            simulatorTimeline = new Timeline(new KeyFrame(Duration.seconds(3), event -> {
+                runSimulatedTransaction();
+            }));
+            simulatorTimeline.setCycleCount(Timeline.INDEFINITE);
+            simulatorTimeline.play();
+        }
+    }
+
+    private void runSimulatedTransaction() {
+        boolean isFraud = Math.random() > 0.7;
+        String[] accIds = {"ACC1001", "ACC1006", "ACC1025", "ACC1042", "ACC1088"};
+        String[] types = {"TRANSFER", "WITHDRAWAL", "DEPOSIT"};
+        String type = types[(int)(Math.random() * types.length)];
+        
+        String source = "DEPOSIT".equals(type) ? null : accIds[(int)(Math.random() * accIds.length)];
+        String dest = "WITHDRAWAL".equals(type) ? null : accIds[(int)(Math.random() * accIds.length)];
+        
+        BigDecimal amt = BigDecimal.valueOf(isFraud ? (Math.random() * 500000 + 50000) : (Math.random() * 5000 + 100));
+        
+        TransactionRequest request = new TransactionRequest(
+                "SIM-" + (int)(Math.random() * 100000),
+                type,
+                amt,
+                null,
+                source,
+                dest
+        );
+        
+        try {
+            fraudAnalysisService.analyzeTransaction(request);
+            refreshData();
+            refreshAlerts();
+        } catch (Exception e) {
+            // Ignore simulation errors
+        }
+    }
+
+    @FXML
     public void handleAnalyze() {
         try {
+            String amtStr = txtAmount.getText();
+            BigDecimal amount = (amtStr != null && !amtStr.isBlank()) ? new BigDecimal(amtStr) : BigDecimal.ZERO;
+            
             TransactionRequest request = new TransactionRequest(
                     txtTxnId.getText(),
                     comboTxnType.getValue(),
-                    new BigDecimal(txtAmount.getText()),
+                    amount,
                     txtTxnTime.getText(),
                     txtSource.getText(),
                     txtDest.getText()
@@ -191,7 +251,7 @@ public class MainFxController {
             if (response.flagged()) {
                 analysisResultLabel.setStyle("-fx-text-fill: #ef4444; -fx-font-weight: bold;"); // Red 500
             } else {
-                analysisResultLabel.setStyle("-fx-text-fill: #22c55e; -fx-font-weight: bold;"); // Green 500
+                analysisResultLabel.setStyle("-fx-text-fill: #10b981; -fx-font-weight: bold;"); // Green 500 (Luxury theme)
             }
             
         } catch (Exception e) {

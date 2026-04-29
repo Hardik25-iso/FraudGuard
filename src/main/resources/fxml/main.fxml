@@ -33,6 +33,7 @@
             <Button text="BULK CSV UPLOAD" maxWidth="Infinity" styleClass="nav-button" onAction="#handleCsvUpload"/>
             <Button fx:id="btnAlerts" text="LIVE ALERTS" maxWidth="Infinity" styleClass="nav-button" onAction="#showAlerts"/>
             <Region VBox.vgrow="ALWAYS" />
+            <Button fx:id="btnSimulate" text="START SIMULATION" maxWidth="Infinity" styleClass="action-button" onAction="#toggleSimulation" style="-fx-margin-bottom: 10px;"/>
             <Button fx:id="btnSettings" text="SETTINGS" maxWidth="Infinity" styleClass="nav-button" onAction="#showSettings"/>
         </VBox>
     </left>
