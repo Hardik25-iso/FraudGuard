@@ -19,6 +19,6 @@ public class SavingsAccount extends BankAccount {
 
     @Override
     public BigDecimal getMinimumBalance() {
-        return new BigDecimal("1000.00");
+        return BigDecimal.ZERO;
     }
 }

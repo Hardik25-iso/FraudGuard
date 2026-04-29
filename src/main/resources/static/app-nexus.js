@@ -1,4 +1,4 @@
-let trendsChart, riskChart;
+let trendsChart, riskChart, volumeChart;
 let lastAuditData = [];
 let lastAlertData = [];
 let simulatorInterval = null;
@@ -434,6 +434,33 @@ function initCharts() {
             }
         });
     }
+
+    const volumeCtx = document.getElementById('volumeChart');
+    if(volumeCtx) {
+        volumeChart = new Chart(volumeCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: ['DEPOSIT', 'WITHDRAWAL', 'TRANSFER'],
+                datasets: [{
+                    data: [0, 0, 0],
+                    backgroundColor: ['rgba(59, 130, 246, 0.8)', 'rgba(236, 72, 153, 0.8)', 'rgba(168, 85, 247, 0.8)'],
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { display: false, beginAtZero: true },
+                    x: {
+                        ticks: { color: 'rgba(255,255,255,0.5)', font: { size: 10 } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
 }
 
 function updateCharts(alerts, audits) {
@@ -445,12 +472,22 @@ function updateCharts(alerts, audits) {
         return acc;
     }, { LOW: 0, MEDIUM: 0, HIGH: 0 });
 
+    const typeCounts = audits.reduce((acc, a) => {
+        if(acc[a.transactionType] !== undefined) acc[a.transactionType]++;
+        return acc;
+    }, { DEPOSIT: 0, WITHDRAWAL: 0, TRANSFER: 0 });
+
     trendsChart.data.labels = new Array(scoreTrend.length).fill('');
     trendsChart.data.datasets[0].data = scoreTrend;
     trendsChart.update();
 
     riskChart.data.datasets[0].data = [riskCounts.LOW, riskCounts.MEDIUM, riskCounts.HIGH];
     riskChart.update();
+
+    if(volumeChart) {
+        volumeChart.data.datasets[0].data = [typeCounts.DEPOSIT, typeCounts.WITHDRAWAL, typeCounts.TRANSFER];
+        volumeChart.update();
+    }
 }
 
 function formatDate(dateStr) {
